@@ -49,6 +49,7 @@ const writeFile = async (language, code) => {
 }
 
 const execute = (command) => {
+  // This function will execute the code and write the output to output.txt file
   return new Promise((resolve, reject) => {
     exec(command, async (err, stdout, stderr) => {
       if (err) { await writeFile("output", err) }
@@ -57,18 +58,6 @@ const execute = (command) => {
       resolve("Done!")
     })
   })
-}
-
-const readOutput = async () => {
-  console.log("here!!!")
-  try {
-    read(`./files/output.txt`, (err, output) => {
-      if (err) { return err } 
-      else if (output) { return output }
-    })
-  } catch (err) {
-    console.log(err)
-  }
 }
 
 app.post("/python", async (req, res) => {
@@ -93,13 +82,13 @@ app.post("/javascript", async (req, res) => {
   await writeFile("javascript", req.body.code)
   // Now ./files/javascript.js contains code - need to execute and return output
   await execute("node ./files/javascript.js")
-
-  const output = await readOutput()
-
+  // Read result from code execution and store in variable output
+  let output = fs.readFileSync("./files/output.txt", "utf-8")
+  // Send output
   res.status(200).send({
     success: "true",
     message: "Compiled Javascript!",
-    output
+    output: output
   })
 })
 

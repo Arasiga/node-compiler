@@ -1,1 +1,1 @@
-console.log(3+9)
+consle.log(3+9)

@@ -1,11 +1,11 @@
-import express from "express"
-import bodyParser from "body-parser"
-
+const express = require("express")
+const bodyParser = require("body-parser")
 const fs = require("fs")
 const util = require('util')
-const write = util.promisify(fs.writeFile);
+const write = util.promisify(fs.writeFile)
+const read = util.promisify(fs.readFile)
 const app = express()
-const { exec } = require('child_process');
+const exec = util.promisify(require('child_process').exec);
 
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
@@ -30,6 +30,9 @@ const writeFile = async (language, code) => {
     case "ruby":
       file = "ruby.rb"
       break
+    case "output":
+      file = "output.txt"
+      break
     default:
       break
   }
@@ -39,6 +42,29 @@ const writeFile = async (language, code) => {
       if(err) { return err }
   
       console.log(`The ${language} file was saved!`)
+    })
+  } catch (err) {
+    console.log(err)
+  }
+}
+
+const execute = (command) => {
+  return new Promise((resolve, reject) => {
+    exec(command, async (err, stdout, stderr) => {
+      if (err) { await writeFile("output", err) }
+      else if (stdout) { await writeFile("output", stdout) }
+      else if (stderr) { await writeFile("output", stderr) }
+      resolve("Done!")
+    })
+  })
+}
+
+const readOutput = async () => {
+  console.log("here!!!")
+  try {
+    read(`./files/output.txt`, (err, output) => {
+      if (err) { return err } 
+      else if (output) { return output }
     })
   } catch (err) {
     console.log(err)
@@ -65,17 +91,15 @@ app.post("/python", async (req, res) => {
 app.post("/javascript", async (req, res) => {
   // Step 1 - Write code to file
   await writeFile("javascript", req.body.code)
-  // Now ./files/javascript.js contains code - need to execute and return stdout or stderr
-  exec("node ./files/javascript.js", (err, stdout, stderr) => {
-    if (err) { console.log(err) }
-    // the *entire* stdout and stderr (buffered)
-    console.log(`stdout: ${stdout}`)
-    console.log(`stderr: ${stderr}`)
-  })
+  // Now ./files/javascript.js contains code - need to execute and return output
+  await execute("node ./files/javascript.js")
+
+  const output = await readOutput()
 
   res.status(200).send({
     success: "true",
     message: "Compiled Javascript!",
+    output
   })
 })
 

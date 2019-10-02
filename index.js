@@ -3,7 +3,6 @@ const bodyParser = require("body-parser")
 const fs = require("fs")
 const util = require('util')
 const write = util.promisify(fs.writeFile)
-const read = util.promisify(fs.readFile)
 const app = express()
 const exec = util.promisify(require('child_process').exec);
 
@@ -60,20 +59,28 @@ const execute = (command) => {
   })
 }
 
+const readOutput = () => {
+  // Reads the output file and returns a promise with the result
+  return new Promise((resolve, reject) => {
+    fs.readFile("./files/output.txt", "utf-8", (err, data) => {
+      if (err) { reject(err) }
+      else if (data) { resolve(data) }
+    })
+  })
+}
+
 app.post("/python", async (req, res) => {
   // Step 1 - Write code to file
   await writeFile("python", req.body.code) 
   // Now ./files/python.py contains code - need to execute and return stdout or stderr
-  exec("python ./files/python.py", (err, stdout, stderr) => {
-    if (err) { console.log(err) }
-    // the *entire* stdout and stderr (buffered)
-    console.log(`stdout: ${stdout}`)
-    console.log(`stderr: ${stderr}`)
-  })
-
+  await execute("python ./files/python.py")
+  // Read result from code execution and store in variable output
+  let output = await readOutput()
+  // Send output
   res.status(200).send({
     success: "true",
     message: "Compiled Python!",
+    output: output
   })
 })
 
@@ -83,7 +90,7 @@ app.post("/javascript", async (req, res) => {
   // Now ./files/javascript.js contains code - need to execute and return output
   await execute("node ./files/javascript.js")
   // Read result from code execution and store in variable output
-  let output = fs.readFileSync("./files/output.txt", "utf-8")
+  let output = await readOutput()
   // Send output
   res.status(200).send({
     success: "true",
@@ -96,16 +103,14 @@ app.post("/ruby", async (req, res) => {
   // Step 1 - Write code to file
   await writeFile("ruby", req.body.code)
   // Now ./files/ruby.rb contains code - need to execute and return stdout or stderr
-  exec("ruby ./files/ruby.rb", (err, stdout, stderr) => {
-    if (err) { console.log(err) }
-    // the *entire* stdout and stderr (buffered)
-    console.log(`stdout: ${stdout}`)
-    console.log(`stderr: ${stderr}`)
-  })
-
+  await execute("ruby ./files/ruby.rb")
+  // Read result from code execution and store in variable output
+  let output = await readOutput()
+  // Send output
   res.status(200).send({
     success: "true",
     message: "Compiled Ruby!",
+    output: output
   })
 })
 

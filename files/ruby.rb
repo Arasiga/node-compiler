@@ -1,1 +1,1 @@
-print (3+981)
+prnt "Hello World\n"

@@ -64,8 +64,15 @@ const readOutput = () => {
   return new Promise((resolve, reject) => {
     fs.readFile("./files/output.txt", "utf-8", (err, data) => {
       if (err) { reject(err) }
-      else if (data) { resolve(data) }
+      else if (data || data === "") { resolve(data) }
     })
+  })
+}
+
+const clearOutputFile = () => {
+  // This function clears the output file so that the next call isn't affected
+  return new Promise((resolve, reject) => {
+    fs.writeFile("./files/output.txt", "", () => resolve("Done clearing file") )
   })
 }
 
@@ -76,6 +83,8 @@ app.post("/python", async (req, res) => {
   await execute("python ./files/python.py")
   // Read result from code execution and store in variable output
   let output = await readOutput()
+  // Before we send output need to clear the output file
+  await clearOutputFile()
   // Send output
   res.status(200).send({
     success: "true",
@@ -91,6 +100,8 @@ app.post("/javascript", async (req, res) => {
   await execute("node ./files/javascript.js")
   // Read result from code execution and store in variable output
   let output = await readOutput()
+  // Before we send output need to clear the output file
+  await clearOutputFile()
   // Send output
   res.status(200).send({
     success: "true",
@@ -106,6 +117,8 @@ app.post("/ruby", async (req, res) => {
   await execute("ruby ./files/ruby.rb")
   // Read result from code execution and store in variable output
   let output = await readOutput()
+  // Before we send output need to clear the output file
+  await clearOutputFile()
   // Send output
   res.status(200).send({
     success: "true",

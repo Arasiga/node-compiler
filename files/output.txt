@@ -1,3 +1,0 @@
-Error: Command failed: ruby ./files/ruby.rb
-./files/ruby.rb:1:in `<main>': undefined method `prnt' for main:Object (NoMethodError)
-Did you mean?  print

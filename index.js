@@ -5,18 +5,15 @@ const util = require('util')
 const write = util.promisify(fs.writeFile)
 const app = express()
 const exec = util.promisify(require('child_process').exec);
+const server = require('http').Server(app);
+const io = require('socket.io')(server);
 
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
 
-app.get('/test', (req, res) => {
-  res.status(200).send({
-    success: "true",
-    message: "hello",
-  })
-})
 
 const writeFile = async (language, code) => {
+  // This function will write code to a specific file
   let file = ""
 
   switch(language) {
@@ -76,6 +73,8 @@ const clearOutputFile = () => {
   })
 }
 
+// API ENDPOINTS TO COMPILE CODE
+
 app.post("/python", async (req, res) => {
   // Step 1 - Write code to file
   await writeFile("python", req.body.code) 
@@ -127,8 +126,35 @@ app.post("/ruby", async (req, res) => {
   })
 })
 
+// LIVE INTERACTIONS DONE WITH WEB SOCKETS
+
+io.on("connect", socket => {
+  // User is connected to the socket
+  console.log("got user connection!")
+  // Event for joining a room
+  socket.on("join_room", room => {
+    socket.join(room)
+  })
+
+  // Event for leaving a room
+  socket.on("leave_room", room => {
+    socket.leave(room)
+  })
+
+  // Event for setting language in room
+  socket.on("set_language", (room, language) => {
+    io.to(room).emit(language)
+  })
+
+  // Event for sending live code in room
+  socket.on("send_code", (room, code) => {
+    io.to(room).emit("receive_code", code, room)
+  })
+
+})
+
 const PORT = 5000
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`server running on port ${PORT}`)
 })

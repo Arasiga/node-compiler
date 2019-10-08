@@ -143,12 +143,17 @@ io.on("connect", socket => {
 
   // Event for setting language in room
   socket.on("set_language", (room, language) => {
-    io.to(room).emit(language)
+    io.to(room).emit("receive_language", language)
   })
 
   // Event for sending live code in room
   socket.on("send_code", (room, code) => {
-    io.to(room).emit("receive_code", code, room)
+    io.to(room).emit("receive_code", code)
+  })
+
+  // Event for sending compiled code in room
+  socket.on("send_compiled_code", (room, output) => {
+    io.to(room).emit("receive_compiled_code", output)
   })
 
 })
